@@ -15,7 +15,7 @@ namespace RunkeeperData
             var user = userRequest.GetUser();
 
             var activitiesRequest = new FitnessActivitiesEndpoint(tokenManager, user);
-            var activities = activitiesRequest.GetFeedPage(null, 500, new DateTime(2014, 07, 20), DateTime.Now);
+            var activities = activitiesRequest.GetFeedPage(null, 500, new DateTime(2014, 04, 01), DateTime.Now);
 
             var totalDistance = 0.0;
             var lines = new List<string>();
@@ -24,17 +24,12 @@ namespace RunkeeperData
                 totalDistance += activity.TotalDistance;
                 var date = activity.StartTime;
                 var distance = activity.TotalDistance;
-                lines.Add(date.ToShortDateString() + " / " + ToKilometers(distance));
+                lines.Add(date.ToShortDateString() + " / " + (distance.ToKilometers()));
             }
 
             System.IO.File.WriteAllLines("runs.txt", lines);
-            Console.WriteLine("Distance totale : " + ToKilometers(totalDistance));
+            Console.WriteLine("Distance totale : " + totalDistance.ToKilometers());
             Console.ReadKey();
-        }
-
-        private static double ToKilometers(double distance)
-        {
-            return Math.Round(distance / 1000, 2);
         }
     }
 }
