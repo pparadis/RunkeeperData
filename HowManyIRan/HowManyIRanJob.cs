@@ -1,10 +1,12 @@
-﻿using System.IO;
+﻿using System.Threading.Tasks;
 using HealthGraphNet;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
 using Microsoft.Azure.WebJobs;
+using System;
+using System.Configuration;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+
 
 namespace RunkeeperData
 {
@@ -12,11 +14,16 @@ namespace RunkeeperData
     {
         static void Main(string[] args)
         {
-            JobHost host = new JobHost();
-            host.RunAndBlock();
+            var host = new JobHost();
+            Task callTask = host.CallAsync(typeof(HowManyIRanJob).GetMethod("Calculate"), new { value = 20 });
+
+            Console.WriteLine("Waiting for async operation...");
+            callTask.Wait();
+            Console.WriteLine("Task completed: " + callTask.Status);
         }
 
-        public static void Calculate([Blob("output/{name}")] TextWriter output)
+        [NoAutomaticTrigger]
+        public static void Calculate([Blob("runs/{name}")] TextWriter output)
         {
             var tokenManager = new AccessTokenManager("7303a9bd039f4484af3fd83d5f60d72c", ConfigurationManager.AppSettings["ClientSecret"], "https://www.frenchcoding.com/", ConfigurationManager.AppSettings["AccessToken"]);
             var userRequest = new UsersEndpoint(tokenManager);
@@ -26,8 +33,8 @@ namespace RunkeeperData
             var activities = activitiesRequest.GetFeedPage(null, null, new DateTime(2013, 04, 01), DateTime.Now);
 
             var totalDistance = activities.Items.Sum(activity => activity.TotalDistance);
-
-            //save total distance
+            Console.WriteLine("Total Distance: " + totalDistance);
+            output.Write(totalDistance);
         }
     }
 }
